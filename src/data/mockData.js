@@ -1,0 +1,55 @@
+export const seedUser = {
+  id: 'u-1000',
+  fullName: 'Alex Morgan',
+  email: 'alex@invoiceflow.dev',
+  password: 'demo1234',
+  company: 'Atlas Studios',
+  role: 'Finance Manager',
+  location: 'Lagos, NG',
+  avatarInitials: 'AM',
+};
+
+export const seedInvoices = [
+  {
+    id: 'RT3080',
+    clientName: 'Jensen Huang',
+    clientEmail: 'jensen@example.com',
+    description: 'Website redesign package',
+    status: 'paid',
+    createdAt: '2026-02-02',
+    paymentDue: '2026-03-01',
+    items: [
+      { id: '1', name: 'Design Audit', quantity: 1, price: 900 },
+      { id: '2', name: 'UI Implementation', quantity: 3, price: 650 },
+    ],
+    senderAddress: '19 Union Terrace, Lagos',
+    clientAddress: '84 King Street, London',
+  },
+  {
+    id: 'XM9141',
+    clientName: 'Satoshi Nakamoto',
+    clientEmail: 'satoshi@example.com',
+    description: 'Retainer for design system maintenance',
+    status: 'pending',
+    createdAt: '2026-02-14',
+    paymentDue: '2026-03-14',
+    items: [
+      { id: '1', name: 'Component QA', quantity: 4, price: 240 },
+      { id: '2', name: 'Token updates', quantity: 6, price: 120 },
+    ],
+    senderAddress: '19 Union Terrace, Lagos',
+    clientAddress: '12 Main Boulevard, Tokyo',
+  },
+  {
+    id: 'RG0314',
+    clientName: 'Ada Lovelace',
+    clientEmail: 'ada@example.com',
+    description: 'Draft invoice for API integration',
+    status: 'draft',
+    createdAt: '2026-03-01',
+    paymentDue: '2026-03-31',
+    items: [{ id: '1', name: 'Integration support', quantity: 10, price: 70 }],
+    senderAddress: '19 Union Terrace, Lagos',
+    clientAddress: '27 Queen Road, Manchester',
+  },
+];
