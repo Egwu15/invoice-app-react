@@ -15,7 +15,7 @@ export default function AuthLayout({ title, subtitle, children }) {
           <p className="auth-subtitle">{subtitle}</p>
           {children}
           <p className="auth-footer-note">
-            Demo account: <strong>alex@invoiceflow.dev</strong> / <strong>demo1234</strong>
+            Sign in with an account from the backend API, or create one here first.
           </p>
           <p className="auth-footer-note">
             New here? <Link to="/register">Create account</Link>

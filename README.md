@@ -83,12 +83,9 @@ npm run build
 npm run preview
 ```
 
-## Demo Credentials
+## Authentication
 
-Use the seeded demo account:
-
-- Email: `alex@invoiceflow.dev`
-- Password: `demo1234`
+Use an account that exists in the backend API, or register a new one from the app.
 
 ## Routes
 
@@ -107,14 +104,19 @@ Use the seeded demo account:
 
 ## Data & Persistence
 
-This project uses mocked data and stores state in LocalStorage:
+This project uses the backend API for authentication and invoice creation, then stores the current session and local invoice cache in LocalStorage:
 
 - auth/session
-- users
 - invoices
 - theme preference
 
-No backend/API is required for local development.
+The backend currently exposes:
+
+- `POST /api/Auth/register`
+- `POST /api/Auth/login`
+- `POST /api/Invoice`
+
+Invoice list/detail/edit/delete still run from the local cache until matching backend endpoints are added.
 
 ## Notes
 

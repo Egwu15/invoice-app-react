@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { seedInvoices } from '../data/mockData';
-import { generateInvoiceId } from '../utils/invoice';
+import { authHeader, apiRequest } from '../utils/api';
+import { mapApiInvoiceToApp, mapInvoiceFormToApi } from '../utils/mappers';
 import { readStorage, writeStorage } from '../utils/storage';
+import { AUTH_KEY, INVOICE_KEY } from '../utils/storageKeys';
 
 const InvoiceContext = createContext(null);
-const INVOICE_KEY = 'invoiceflow.invoices';
 
 export function InvoiceProvider({ children }) {
   const [invoices, setInvoices] = useState(() => readStorage(INVOICE_KEY, seedInvoices));
@@ -14,14 +15,26 @@ export function InvoiceProvider({ children }) {
   const value = useMemo(
     () => ({
       invoices,
-      createInvoice: (payload) => {
-        const invoice = {
-          ...payload,
-          id: generateInvoiceId(),
-          createdAt: payload.createdAt || new Date().toISOString().slice(0, 10),
-        };
-        setInvoices((prev) => [invoice, ...prev]);
-        return invoice;
+      createInvoice: async (payload) => {
+        const session = readStorage(AUTH_KEY, null);
+
+        if (!session?.token) {
+          return { ok: false, message: 'You need to sign in before creating invoices.' };
+        }
+
+        try {
+          const response = await apiRequest('/Invoice', {
+            method: 'POST',
+            headers: authHeader(session.token),
+            body: JSON.stringify(mapInvoiceFormToApi(payload)),
+          });
+
+          const invoice = mapApiInvoiceToApp(response, payload);
+          setInvoices((prev) => [invoice, ...prev]);
+          return { ok: true, invoice };
+        } catch (error) {
+          return { ok: false, message: error.message || 'Unable to create invoice.' };
+        }
       },
       updateInvoice: (invoiceId, patch) => {
         setInvoices((prev) =>

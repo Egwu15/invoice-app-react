@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const { login, currentUser } = useAuth();
-  const [email, setEmail] = useState('alex@invoiceflow.dev');
-  const [password, setPassword] = useState('demo1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,9 +16,12 @@ export default function LoginPage() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
-    const result = login(email, password);
+    setError('');
+    setIsSubmitting(true);
+    const result = await login(email, password);
+    setIsSubmitting(false);
     if (!result.ok) {
       setError(result.message);
       return;
@@ -30,7 +34,13 @@ export default function LoginPage() {
       <form onSubmit={onSubmit} className="auth-form">
         <label>
           Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isSubmitting}
+          />
         </label>
         <label>
           Password
@@ -39,11 +49,12 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
         {error ? <p className="form-error">{error}</p> : null}
-        <button className="primary" type="submit">
-          Sign In
+        <button className="primary" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
       <p className="auth-inline-link">

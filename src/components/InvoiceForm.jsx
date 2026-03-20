@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 const EMPTY_ITEM = { id: 'tmp-1', name: '', quantity: 1, price: 100 };
 
-export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
+export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel, isSubmitting = false }) {
   const [form, setForm] = useState(
     initialInvoice || {
       clientName: '',
@@ -64,6 +64,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
             value={form.clientName}
             onChange={(e) => updateField('clientName', e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
         <label>
@@ -73,6 +74,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
             value={form.clientEmail}
             onChange={(e) => updateField('clientEmail', e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
       </div>
@@ -83,6 +85,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
           value={form.description}
           onChange={(e) => updateField('description', e.target.value)}
           required
+          disabled={isSubmitting}
         />
       </label>
 
@@ -94,6 +97,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
             value={form.createdAt}
             onChange={(e) => updateField('createdAt', e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
         <label>
@@ -103,6 +107,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
             value={form.paymentDue}
             onChange={(e) => updateField('paymentDue', e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
       </div>
@@ -114,6 +119,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
             value={form.senderAddress}
             onChange={(e) => updateField('senderAddress', e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
         <label>
@@ -122,6 +128,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
             value={form.clientAddress}
             onChange={(e) => updateField('clientAddress', e.target.value)}
             required
+            disabled={isSubmitting}
           />
         </label>
       </div>
@@ -132,6 +139,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
           value={form.status}
           onChange={(e) => updateField('status', e.target.value)}
           required
+          disabled={isSubmitting}
         >
           <option value="draft">Draft</option>
           <option value="pending">Pending</option>
@@ -148,6 +156,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
               value={item.name}
               onChange={(e) => updateItem(item.id, 'name', e.target.value)}
               required
+              disabled={isSubmitting}
             />
             <input
               type="number"
@@ -156,6 +165,7 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
               value={item.quantity}
               onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
               required
+              disabled={isSubmitting}
             />
             <input
               type="number"
@@ -164,20 +174,26 @@ export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel }) {
               value={item.price}
               onChange={(e) => updateItem(item.id, 'price', e.target.value)}
               required
+              disabled={isSubmitting}
             />
-            <button type="button" className="ghost danger" onClick={() => removeItem(item.id)}>
+            <button
+              type="button"
+              className="ghost danger"
+              onClick={() => removeItem(item.id)}
+              disabled={isSubmitting}
+            >
               Remove
             </button>
           </div>
         ))}
-        <button type="button" className="ghost" onClick={addItem}>
+        <button type="button" className="ghost" onClick={addItem} disabled={isSubmitting}>
           + Add Item
         </button>
       </div>
 
       <div className="form-footer">
         <strong>Total: ${total.toLocaleString()}</strong>
-        <button className="primary" type="submit">
+        <button className="primary" type="submit" disabled={isSubmitting}>
           {submitLabel}
         </button>
       </div>

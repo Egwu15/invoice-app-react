@@ -1,14 +1,26 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import InvoiceForm from '../components/InvoiceForm';
 import { useInvoices } from '../context/InvoiceContext';
 
 export default function CreateInvoicePage() {
   const { createInvoice } = useInvoices();
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const onCreate = (invoiceData) => {
-    const created = createInvoice(invoiceData);
-    navigate(`/invoices/${created.id}`);
+  const onCreate = async (invoiceData) => {
+    setError('');
+    setIsSubmitting(true);
+    const result = await createInvoice(invoiceData);
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
+    navigate(`/invoices/${result.invoice.id}`);
   };
 
   return (
@@ -22,7 +34,12 @@ export default function CreateInvoicePage() {
           <h1>New Invoice</h1>
           <p>Create and send a new invoice.</p>
         </div>
-        <InvoiceForm onSubmit={onCreate} submitLabel="Save Invoice" />
+        {error ? <p className="form-error">{error}</p> : null}
+        <InvoiceForm
+          onSubmit={onCreate}
+          submitLabel={isSubmitting ? 'Saving...' : 'Save Invoice'}
+          isSubmitting={isSubmitting}
+        />
       </article>
     </section>
   );

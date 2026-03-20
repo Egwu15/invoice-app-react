@@ -1,18 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { seedUser } from '../data/mockData';
+import { apiRequest } from '../utils/api';
+import { mapAuthResponseToUser, getAvatarInitials } from '../utils/mappers';
 import { readStorage, writeStorage } from '../utils/storage';
+import { AUTH_KEY, THEME_KEY } from '../utils/storageKeys';
 
 const AuthContext = createContext(null);
-const AUTH_KEY = 'invoiceflow.auth';
-const USERS_KEY = 'invoiceflow.users';
-const THEME_KEY = 'invoiceflow.theme';
 
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useState(() => readStorage(USERS_KEY, [seedUser]));
   const [currentUser, setCurrentUser] = useState(() => readStorage(AUTH_KEY, null));
   const [theme, setTheme] = useState(() => readStorage(THEME_KEY, 'light'));
 
-  useEffect(() => writeStorage(USERS_KEY, users), [users]);
   useEffect(() => writeStorage(AUTH_KEY, currentUser), [currentUser]);
   useEffect(() => {
     writeStorage(THEME_KEY, theme);
@@ -21,50 +18,49 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      users,
       currentUser,
       theme,
-      login: (email, password) => {
-        const matched = users.find((u) => u.email === email && u.password === password);
-        if (!matched) {
-          return { ok: false, message: 'Invalid credentials. Use alex@invoiceflow.dev / demo1234' };
+      login: async (email, password) => {
+        try {
+          const response = await apiRequest('/Auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+          });
+          setCurrentUser(mapAuthResponseToUser(response));
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, message: error.message || 'Unable to sign in.' };
         }
-        setCurrentUser(matched);
-        return { ok: true };
       },
-      register: ({ fullName, email, password }) => {
-        if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-          return { ok: false, message: 'Email already exists.' };
+      register: async ({ fullName, email, password }) => {
+        try {
+          const response = await apiRequest('/Auth/register', {
+            method: 'POST',
+            body: JSON.stringify({
+              userName: fullName,
+              email,
+              password,
+            }),
+          });
+          setCurrentUser(mapAuthResponseToUser(response));
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, message: error.message || 'Unable to create account.' };
         }
-        const user = {
-          id: `u-${Date.now()}`,
-          fullName,
-          email,
-          password,
-          company: 'New Company',
-          role: 'Owner',
-          location: 'Remote',
-          avatarInitials: fullName
-            .split(' ')
-            .map((p) => p[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase(),
-        };
-        setUsers((prev) => [...prev, user]);
-        setCurrentUser(user);
-        return { ok: true };
       },
       logout: () => setCurrentUser(null),
       updateProfile: (patch) => {
         if (!currentUser) return;
-        const updated = { ...currentUser, ...patch };
+        const updated = {
+          ...currentUser,
+          ...patch,
+          avatarInitials: getAvatarInitials(patch.fullName || currentUser.fullName),
+        };
         setCurrentUser(updated);
-        setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
       },
       toggleTheme: () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light')),
     }),
-    [users, currentUser, theme]
+    [currentUser, theme]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
