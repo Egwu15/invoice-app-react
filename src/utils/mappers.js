@@ -42,13 +42,20 @@ export function mapApiInvoiceToApp(invoiceResponse, fallbackPayload) {
     id: invoiceResponse.invoiceNumber || String(invoiceResponse.id),
     clientName: invoiceResponse.clientName,
     clientEmail: invoiceResponse.clientEmail,
-    description: invoiceResponse.description || fallbackPayload.description || '',
-    status: mapInvoiceStatus(invoiceResponse.status, fallbackPayload.status),
-    createdAt: formatDateOnly(invoiceResponse.createdAt) || fallbackPayload.createdAt,
-    paymentDue: formatDateOnly(invoiceResponse.dueDate) || fallbackPayload.paymentDue,
-    senderAddress: invoiceResponse.senderAddress || fallbackPayload.senderAddress,
-    clientAddress: invoiceResponse.billTo || fallbackPayload.clientAddress,
-    items: fallbackPayload.items,
+    description: invoiceResponse.description || fallbackPayload?.description || '',
+    status: mapInvoiceStatus(invoiceResponse.status, fallbackPayload?.status),
+    createdAt: formatDateOnly(invoiceResponse.createdAt) || fallbackPayload?.createdAt || '',
+    paymentDue: formatDateOnly(invoiceResponse.dueDate) || fallbackPayload?.paymentDue || '',
+    senderAddress: invoiceResponse.senderAddress || fallbackPayload?.senderAddress || '',
+    clientAddress: invoiceResponse.billTo || fallbackPayload?.clientAddress || '',
+    items: Array.isArray(invoiceResponse.items)
+      ? invoiceResponse.items.map((item, index) => ({
+          id: item.id || `${invoiceResponse.id || invoiceResponse.invoiceNumber}-${index + 1}`,
+          name: item.name,
+          quantity: Number(item.quantity) || 1,
+          price: Number(item.amount) || 0,
+        }))
+      : fallbackPayload?.items || [],
   };
 }
 
@@ -66,5 +73,8 @@ function mapInvoiceStatus(status, fallbackStatus) {
 }
 
 function formatDateOnly(value) {
-  return value ? new Date(value).toISOString().slice(0, 10) : '';
+  if (!value) return '';
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
 }

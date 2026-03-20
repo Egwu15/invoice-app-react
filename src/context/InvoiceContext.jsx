@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { seedInvoices } from '../data/mockData';
+import { useAuth } from './AuthContext';
 import { authHeader, apiRequest } from '../utils/api';
 import { mapApiInvoiceToApp, mapInvoiceFormToApi } from '../utils/mappers';
 import { readStorage, writeStorage } from '../utils/storage';
@@ -8,13 +9,65 @@ import { AUTH_KEY, INVOICE_KEY } from '../utils/storageKeys';
 const InvoiceContext = createContext(null);
 
 export function InvoiceProvider({ children }) {
+  const { currentUser } = useAuth();
   const [invoices, setInvoices] = useState(() => readStorage(INVOICE_KEY, seedInvoices));
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => writeStorage(INVOICE_KEY, invoices), [invoices]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadInvoices = async () => {
+      if (!currentUser?.token) {
+        setError('');
+        return;
+      }
+
+      setIsLoading(true);
+      setError('');
+
+      try {
+        const response = await apiRequest('/Invoice', {
+          headers: authHeader(currentUser.token),
+        });
+
+        if (!isMounted) return;
+
+        setInvoices((prev) =>
+          response.map((invoice) => {
+            const fallbackInvoice = prev.find(
+              (item) =>
+                item.id === invoice.invoiceNumber ||
+                item.id === String(invoice.id)
+            );
+
+            return mapApiInvoiceToApp(invoice, fallbackInvoice);
+          })
+        );
+      } catch (loadError) {
+        if (!isMounted) return;
+        setError(loadError.message || 'Unable to load invoices.');
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadInvoices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.token]);
 
   const value = useMemo(
     () => ({
       invoices,
+      isLoading,
+      error,
       createInvoice: async (payload) => {
         const session = readStorage(AUTH_KEY, null);
 
@@ -31,6 +84,7 @@ export function InvoiceProvider({ children }) {
 
           const invoice = mapApiInvoiceToApp(response, payload);
           setInvoices((prev) => [invoice, ...prev]);
+          setError('');
           return { ok: true, invoice };
         } catch (error) {
           return { ok: false, message: error.message || 'Unable to create invoice.' };
@@ -52,7 +106,7 @@ export function InvoiceProvider({ children }) {
         );
       },
     }),
-    [invoices]
+    [error, invoices, isLoading]
   );
 
   return <InvoiceContext.Provider value={value}>{children}</InvoiceContext.Provider>;

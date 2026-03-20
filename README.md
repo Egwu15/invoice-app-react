@@ -114,9 +114,10 @@ The backend currently exposes:
 
 - `POST /api/Auth/register`
 - `POST /api/Auth/login`
+- `GET /api/Invoice`
 - `POST /api/Invoice`
 
-Invoice list/detail/edit/delete still run from the local cache until matching backend endpoints are added.
+Invoice list and dashboard now hydrate from the backend invoice list. Invoice detail/edit/delete still depend on the local cache because the current API contract does not expose invoice-by-id, update, or delete endpoints.
 
 ## Notes
 

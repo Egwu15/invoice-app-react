@@ -20,9 +20,17 @@ export function formatCurrency(value) {
 }
 
 export function formatDate(dateInput) {
+  if (!dateInput) return 'N/A';
+
+  const date = new Date(dateInput);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'N/A';
+  }
+
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(dateInput));
+  }).format(date);
 }

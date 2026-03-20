@@ -5,7 +5,7 @@ import { useInvoices } from '../context/InvoiceContext';
 import { calcInvoiceTotal, formatCurrency, formatDate } from '../utils/invoice';
 
 export default function InvoicesPage() {
-  const { invoices } = useInvoices();
+  const { invoices, isLoading, error } = useInvoices();
   const [statusFilter, setStatusFilter] = useState('all');
 
   const filtered = useMemo(() => {
@@ -42,6 +42,8 @@ export default function InvoicesPage() {
       </div>
 
       <div className="invoice-list">
+        {isLoading ? <p className="empty-state">Loading invoices...</p> : null}
+        {error ? <p className="form-error">{error}</p> : null}
         {filtered.map((invoice, index) => (
           <Link
             key={invoice.id}
@@ -59,7 +61,9 @@ export default function InvoicesPage() {
             </span>
           </Link>
         ))}
-        {filtered.length === 0 ? <p className="empty-state">No invoices match this filter.</p> : null}
+        {!isLoading && filtered.length === 0 ? (
+          <p className="empty-state">No invoices match this filter.</p>
+        ) : null}
       </div>
     </section>
   );

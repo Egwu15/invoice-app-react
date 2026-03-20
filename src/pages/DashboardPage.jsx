@@ -4,7 +4,7 @@ import { useInvoices } from '../context/InvoiceContext';
 import { calcInvoiceTotal, formatCurrency, formatDate } from '../utils/invoice';
 
 export default function DashboardPage() {
-  const { invoices } = useInvoices();
+  const { invoices, isLoading, error } = useInvoices();
   const paid = invoices.filter((inv) => inv.status === 'paid').length;
   const pending = invoices.filter((inv) => inv.status === 'pending').length;
   const totalRevenue = invoices
@@ -17,6 +17,8 @@ export default function DashboardPage() {
         <h1>Dashboard</h1>
         <p>Snapshot of invoice performance and payment health.</p>
       </div>
+      {isLoading ? <p className="empty-state">Loading invoices...</p> : null}
+      {error ? <p className="form-error">{error}</p> : null}
 
       <div className="stats-grid">
         <article className="card stat-card">
