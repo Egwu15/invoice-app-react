@@ -48,8 +48,8 @@ export default function DashboardPage() {
         </div>
         <div className="simple-table">
           {invoices.slice(0, 5).map((invoice) => (
-            <Link key={invoice.id} to={`/invoices/${invoice.id}`} className="row-link">
-              <span>#{invoice.id}</span>
+            <Link key={invoice.backendId} to={`/invoices/${invoice.backendId}`} className="row-link">
+              <span>#{invoice.invoiceNumber}</span>
               <span>{invoice.clientName}</span>
               <span>{formatDate(invoice.paymentDue)}</span>
               <span>{formatCurrency(calcInvoiceTotal(invoice.items))}</span>

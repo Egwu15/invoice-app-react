@@ -28,7 +28,8 @@ export function mapInvoiceFormToApi(payload) {
     billTo: payload.clientAddress,
     sendTo: payload.clientEmail,
     senderAddress: payload.senderAddress || null,
-    dueDate: payload.paymentDue ? new Date(`${payload.paymentDue}T00:00:00Z`).toISOString() : null,
+    status: mapAppStatusToApi(payload.status),
+    dueDate: payload.paymentDue ? `${payload.paymentDue}T00:00:00` : null,
     items: payload.items.map((item) => ({
       name: item.name,
       amount: Number(item.price),
@@ -37,9 +38,20 @@ export function mapInvoiceFormToApi(payload) {
   };
 }
 
-export function mapApiInvoiceToApp(invoiceResponse, fallbackPayload) {
+export function mapUpdateInvoiceRequest(payload) {
   return {
-    id: invoiceResponse.invoiceNumber || String(invoiceResponse.id),
+    invoiceDto: mapInvoiceFormToApi(payload),
+  };
+}
+
+export function mapApiInvoiceToApp(invoiceResponse, fallbackPayload) {
+  const backendId = Number(invoiceResponse.id) || fallbackPayload?.backendId || null;
+
+  return {
+    id: backendId ? String(backendId) : fallbackPayload?.id || '',
+    backendId,
+    invoiceNumber:
+      invoiceResponse.invoiceNumber || fallbackPayload?.invoiceNumber || String(invoiceResponse.id),
     clientName: invoiceResponse.clientName,
     clientEmail: invoiceResponse.clientEmail,
     description: invoiceResponse.description || fallbackPayload?.description || '',
@@ -69,6 +81,19 @@ function mapInvoiceStatus(status, fallbackStatus) {
       return 'paid';
     default:
       return fallbackStatus || 'draft';
+  }
+}
+
+export function mapAppStatusToApi(status) {
+  switch (status) {
+    case 'pending':
+      return 1;
+    case 'paid':
+      return 2;
+    case 'draft':
+      return 0;
+    default:
+      return undefined;
   }
 }
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { apiRequest } from '../utils/api';
+import { API_UNAUTHORIZED_EVENT, apiRequest } from '../utils/api';
 import { mapAuthResponseToUser, getAvatarInitials } from '../utils/mappers';
 import { readStorage, writeStorage } from '../utils/storage';
 import { AUTH_KEY, THEME_KEY } from '../utils/storageKeys';
@@ -11,6 +11,12 @@ export function AuthProvider({ children }) {
   const [theme, setTheme] = useState(() => readStorage(THEME_KEY, 'light'));
 
   useEffect(() => writeStorage(AUTH_KEY, currentUser), [currentUser]);
+  useEffect(() => {
+    const handleUnauthorized = () => setCurrentUser(null);
+
+    window.addEventListener(API_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(API_UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, []);
   useEffect(() => {
     writeStorage(THEME_KEY, theme);
     document.documentElement.setAttribute('data-theme', theme);

@@ -20,7 +20,7 @@ export default function CreateInvoicePage() {
       return;
     }
 
-    navigate(`/invoices/${result.invoice.id}`);
+    navigate(`/invoices/${result.invoice.backendId}`);
   };
 
   return (

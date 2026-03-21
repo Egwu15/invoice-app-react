@@ -1,12 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
 import { useInvoices } from '../context/InvoiceContext';
 import { calcInvoiceTotal, formatCurrency, formatDate } from '../utils/invoice';
 
 export default function InvoicesPage() {
-  const { invoices, isLoading, error } = useInvoices();
+  const { invoices, isLoading, error, activeStatusFilter, refreshInvoices } = useInvoices();
   const [statusFilter, setStatusFilter] = useState('all');
+
+  useEffect(() => {
+    setStatusFilter(activeStatusFilter);
+  }, [activeStatusFilter]);
+
+  useEffect(() => {
+    refreshInvoices(statusFilter);
+  }, [statusFilter]);
 
   const filtered = useMemo(() => {
     return statusFilter === 'all'
@@ -46,12 +54,12 @@ export default function InvoicesPage() {
         {error ? <p className="form-error">{error}</p> : null}
         {filtered.map((invoice, index) => (
           <Link
-            key={invoice.id}
+            key={invoice.backendId}
             className="invoice-row"
-            to={`/invoices/${invoice.id}`}
+            to={`/invoices/${invoice.backendId}`}
             style={{ '--delay-index': index }}
           >
-            <strong className="invoice-id">#{invoice.id}</strong>
+            <strong className="invoice-id">#{invoice.invoiceNumber}</strong>
             <span className="invoice-due">Due {formatDate(invoice.paymentDue)}</span>
             <span className="invoice-client">{invoice.clientName}</span>
             <strong className="invoice-total">{formatCurrency(calcInvoiceTotal(invoice.items))}</strong>

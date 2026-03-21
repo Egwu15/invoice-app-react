@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import InvoiceForm from '../components/InvoiceForm';
 import StatusPill from '../components/StatusPill';
@@ -7,14 +7,36 @@ import { calcInvoiceTotal, formatCurrency, formatDate } from '../utils/invoice';
 
 export default function InvoiceDetailPage() {
   const { invoiceId } = useParams();
-  const { invoices, deleteInvoice, markInvoicePaid, updateInvoice } = useInvoices();
+  const { invoices, deleteInvoice, getInvoiceDetail, markInvoicePaid, updateInvoice } = useInvoices();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const invoice = useMemo(
-    () => invoices.find((item) => item.id === invoiceId),
+    () => invoices.find((item) => String(item.backendId) === invoiceId),
     [invoices, invoiceId]
   );
+
+  useEffect(() => {
+    const loadDetail = async () => {
+      if (!invoice?.backendId) return;
+
+      setIsLoadingDetail(true);
+      const result = await getInvoiceDetail(invoice.id);
+      if (result.ok) {
+        setError('');
+      }
+      setIsLoadingDetail(false);
+
+      if (!result.ok) {
+        setError(result.message);
+      }
+    };
+
+    loadDetail();
+  }, [invoice?.backendId, invoiceId]);
 
   if (!invoice) {
     return (
@@ -27,14 +49,43 @@ export default function InvoiceDetailPage() {
     );
   }
 
-  const onDelete = () => {
-    deleteInvoice(invoice.id);
+  const onDelete = async () => {
+    setError('');
+    setIsSubmitting(true);
+    const result = await deleteInvoice(invoice.id);
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
     navigate('/invoices');
   };
 
-  const onUpdate = (payload) => {
-    updateInvoice(invoice.id, payload);
+  const onUpdate = async (payload) => {
+    setError('');
+    setIsSubmitting(true);
+    const result = await updateInvoice(invoice.id, payload);
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
     setIsEditing(false);
+  };
+
+  const onMarkPaid = async () => {
+    setError('');
+    setIsSubmitting(true);
+    const result = await markInvoicePaid(invoice.id);
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+    }
   };
 
   return (
@@ -50,23 +101,35 @@ export default function InvoiceDetailPage() {
         </div>
         <div className="detail-actions">
           {invoice.status !== 'paid' ? (
-            <button className="ghost" type="button" onClick={() => markInvoicePaid(invoice.id)}>
-              Mark as Paid
+            <button className="ghost" type="button" onClick={onMarkPaid} disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Mark as Paid'}
             </button>
           ) : null}
-          <button className="ghost" type="button" onClick={() => setIsEditing((prev) => !prev)}>
+          <button
+            className="ghost"
+            type="button"
+            onClick={() => setIsEditing((prev) => !prev)}
+            disabled={isSubmitting}
+          >
             {isEditing ? 'Cancel' : 'Edit'}
           </button>
-          <button className="danger" type="button" onClick={onDelete}>
-            Delete
+          <button className="danger" type="button" onClick={onDelete} disabled={isSubmitting}>
+            {isSubmitting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>
+      {error ? <p className="form-error">{error}</p> : null}
+      {isLoadingDetail ? <p className="empty-state">Loading invoice details...</p> : null}
 
       {isEditing ? (
         <div className="card page-enter">
-          <h3>Edit invoice #{invoice.id}</h3>
-          <InvoiceForm initialInvoice={invoice} onSubmit={onUpdate} submitLabel="Save Changes" />
+          <h3>Edit invoice #{invoice.invoiceNumber}</h3>
+          <InvoiceForm
+            initialInvoice={invoice}
+            onSubmit={onUpdate}
+            submitLabel={isSubmitting ? 'Saving...' : 'Save Changes'}
+            isSubmitting={isSubmitting}
+          />
         </div>
       ) : null}
 
@@ -75,7 +138,7 @@ export default function InvoiceDetailPage() {
           <div>
             <h2>
               <span>#</span>
-              {invoice.id}
+              {invoice.invoiceNumber}
             </h2>
             <p>{invoice.description}</p>
           </div>
