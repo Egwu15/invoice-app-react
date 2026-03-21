@@ -10,6 +10,14 @@ export function calcInvoiceTotal(items) {
   return items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.price), 0);
 }
 
+export function getInvoiceTotal(invoice) {
+  if (typeof invoice?.total === 'number' && !Number.isNaN(invoice.total)) {
+    return invoice.total;
+  }
+
+  return calcInvoiceTotal(invoice?.items || []);
+}
+
 export function formatCurrency(value) {
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',

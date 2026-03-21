@@ -1,21 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const EMPTY_ITEM = { id: 'tmp-1', name: '', quantity: 1, price: 100 };
+const buildInitialForm = (initialInvoice) =>
+  initialInvoice || {
+    clientName: '',
+    clientEmail: '',
+    description: '',
+    status: 'pending',
+    createdAt: new Date().toISOString().slice(0, 10),
+    paymentDue: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().slice(0, 10),
+    senderAddress: '19 Union Terrace, Lagos',
+    clientAddress: '',
+    items: [EMPTY_ITEM],
+  };
 
 export default function InvoiceForm({ initialInvoice, onSubmit, submitLabel, isSubmitting = false }) {
-  const [form, setForm] = useState(
-    initialInvoice || {
-      clientName: '',
-      clientEmail: '',
-      description: '',
-      status: 'pending',
-      createdAt: new Date().toISOString().slice(0, 10),
-      paymentDue: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().slice(0, 10),
-      senderAddress: '19 Union Terrace, Lagos',
-      clientAddress: '',
-      items: [EMPTY_ITEM],
-    }
-  );
+  const [form, setForm] = useState(() => buildInitialForm(initialInvoice));
+
+  useEffect(() => {
+    setForm(buildInitialForm(initialInvoice));
+  }, [initialInvoice]);
 
   const total = useMemo(
     () => form.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.price), 0),

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import InvoiceForm from '../components/InvoiceForm';
 import StatusPill from '../components/StatusPill';
 import { useInvoices } from '../context/InvoiceContext';
-import { calcInvoiceTotal, formatCurrency, formatDate } from '../utils/invoice';
+import { formatCurrency, formatDate, getInvoiceTotal } from '../utils/invoice';
 
 export default function InvoiceDetailPage() {
   const { invoiceId } = useParams();
@@ -180,7 +180,7 @@ export default function InvoiceDetailPage() {
           ))}
           <div className="summary-total">
             <span>Amount Due</span>
-            <strong>{formatCurrency(calcInvoiceTotal(invoice.items))}</strong>
+            <strong>{formatCurrency(getInvoiceTotal(invoice))}</strong>
           </div>
         </div>
       </article>

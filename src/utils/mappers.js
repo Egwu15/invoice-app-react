@@ -38,12 +38,6 @@ export function mapInvoiceFormToApi(payload) {
   };
 }
 
-export function mapUpdateInvoiceRequest(payload) {
-  return {
-    invoiceDto: mapInvoiceFormToApi(payload),
-  };
-}
-
 export function mapApiInvoiceToApp(invoiceResponse, fallbackPayload) {
   const backendId = Number(invoiceResponse.id) || fallbackPayload?.backendId || null;
 
@@ -56,6 +50,15 @@ export function mapApiInvoiceToApp(invoiceResponse, fallbackPayload) {
     clientEmail: invoiceResponse.clientEmail,
     description: invoiceResponse.description || fallbackPayload?.description || '',
     status: mapInvoiceStatus(invoiceResponse.status, fallbackPayload?.status),
+    total:
+      Number(invoiceResponse.totalAmount ?? invoiceResponse.total) ||
+      fallbackPayload?.total ||
+      (Array.isArray(invoiceResponse.items)
+        ? invoiceResponse.items.reduce(
+            (sum, item) => sum + Number(item.amount) * Number(item.quantity),
+            0
+          )
+        : 0),
     createdAt: formatDateOnly(invoiceResponse.createdAt) || fallbackPayload?.createdAt || '',
     paymentDue: formatDateOnly(invoiceResponse.dueDate) || fallbackPayload?.paymentDue || '',
     senderAddress: invoiceResponse.senderAddress || fallbackPayload?.senderAddress || '',
@@ -75,6 +78,8 @@ function mapInvoiceStatus(status, fallbackStatus) {
   if (typeof status === 'string') return status.toLowerCase();
 
   switch (status) {
+    case 0:
+      return 'draft';
     case 1:
       return 'pending';
     case 2:
@@ -86,12 +91,12 @@ function mapInvoiceStatus(status, fallbackStatus) {
 
 export function mapAppStatusToApi(status) {
   switch (status) {
+    case 'draft':
+      return 0;
     case 'pending':
       return 1;
     case 'paid':
       return 2;
-    case 'draft':
-      return 0;
     default:
       return undefined;
   }

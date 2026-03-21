@@ -1,15 +1,60 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import StatusPill from '../components/StatusPill';
+import { useAuth } from '../context/AuthContext';
 import { useInvoices } from '../context/InvoiceContext';
-import { calcInvoiceTotal, formatCurrency, formatDate } from '../utils/invoice';
+import { authHeader, apiRequest } from '../utils/api';
+import { formatCurrency, formatDate, getInvoiceTotal } from '../utils/invoice';
 
 export default function DashboardPage() {
+  const { currentUser } = useAuth();
   const { invoices, isLoading, error } = useInvoices();
-  const paid = invoices.filter((inv) => inv.status === 'paid').length;
-  const pending = invoices.filter((inv) => inv.status === 'pending').length;
-  const totalRevenue = invoices
-    .filter((inv) => inv.status === 'paid')
-    .reduce((sum, invoice) => sum + calcInvoiceTotal(invoice.items), 0);
+  const [stats, setStats] = useState({
+    totalInvoices: 0,
+    totalPending: 0,
+    totalPaid: 0,
+    totalRevenue: 0,
+  });
+  const [statsError, setStatsError] = useState('');
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      if (!currentUser?.token) {
+        setStats({
+          totalInvoices: 0,
+          totalPending: 0,
+          totalPaid: 0,
+          totalRevenue: 0,
+        });
+        setStatsError('');
+        setIsStatsLoading(false);
+        return;
+      }
+
+      setIsStatsLoading(true);
+      setStatsError('');
+
+      try {
+        const response = await apiRequest('/Invoice/stats', {
+          headers: authHeader(currentUser.token),
+        });
+
+        setStats({
+          totalInvoices: Number(response.totalInvoices) || 0,
+          totalPending: Number(response.totalPending) || 0,
+          totalPaid: Number(response.totalPaid) || 0,
+          totalRevenue: Number(response.totalRevenue) || 0,
+        });
+      } catch (loadError) {
+        setStatsError(loadError.message || 'Unable to load dashboard stats.');
+      } finally {
+        setIsStatsLoading(false);
+      }
+    };
+
+    loadStats();
+  }, [currentUser?.token]);
 
   return (
     <section>
@@ -19,23 +64,25 @@ export default function DashboardPage() {
       </div>
       {isLoading ? <p className="empty-state">Loading invoices...</p> : null}
       {error ? <p className="form-error">{error}</p> : null}
+      {isStatsLoading ? <p className="empty-state">Loading dashboard stats...</p> : null}
+      {statsError ? <p className="form-error">{statsError}</p> : null}
 
       <div className="stats-grid">
         <article className="card stat-card">
           <span>Total Invoices</span>
-          <h2>{invoices.length}</h2>
+          <h2>{stats.totalInvoices}</h2>
         </article>
         <article className="card stat-card">
           <span>Pending</span>
-          <h2>{pending}</h2>
+          <h2>{stats.totalPending}</h2>
         </article>
         <article className="card stat-card">
           <span>Paid</span>
-          <h2>{paid}</h2>
+          <h2>{stats.totalPaid}</h2>
         </article>
         <article className="card stat-card">
           <span>Revenue</span>
-          <h2>{formatCurrency(totalRevenue)}</h2>
+          <h2>{formatCurrency(stats.totalRevenue)}</h2>
         </article>
       </div>
 
@@ -52,7 +99,7 @@ export default function DashboardPage() {
               <span>#{invoice.invoiceNumber}</span>
               <span>{invoice.clientName}</span>
               <span>{formatDate(invoice.paymentDue)}</span>
-              <span>{formatCurrency(calcInvoiceTotal(invoice.items))}</span>
+              <span>{formatCurrency(getInvoiceTotal(invoice))}</span>
               <StatusPill status={invoice.status} />
             </Link>
           ))}

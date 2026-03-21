@@ -5,7 +5,6 @@ import {
   mapApiInvoiceToApp,
   mapAppStatusToApi,
   mapInvoiceFormToApi,
-  mapUpdateInvoiceRequest,
 } from '../utils/mappers';
 
 const InvoiceContext = createContext(null);
@@ -98,7 +97,7 @@ export function InvoiceProvider({ children }) {
       await apiRequest(`/Invoice/${existingInvoice.backendId}`, {
         method: 'PUT',
         headers: authHeader(currentUser.token),
-        body: JSON.stringify(mapUpdateInvoiceRequest(nextInvoice)),
+        body: JSON.stringify(mapInvoiceFormToApi(nextInvoice)),
       });
 
       setInvoices((prev) =>
